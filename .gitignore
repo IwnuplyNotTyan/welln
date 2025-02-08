@@ -8,8 +8,8 @@
 go.work
 go.work.sum
 .env
+.welln.db
 pkg
 src
 welln
-main.db
-welln.db
+welln-1.0.0-1-x86_64.pkg.tar.zst

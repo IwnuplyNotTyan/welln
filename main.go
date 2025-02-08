@@ -38,7 +38,8 @@ func main() {
 	} else if *ls {
 		listNotes()
 	} else {
-		fmt.Println("No valid flags provided. Use -add, -rm, or -ls.")
+		help := termenv.String(fmt.Sprintf("No valid flags provided. Use -add, -rm, or -ls.")).Italic().Foreground(termenv.ANSICyan)
+		fmt.Print(help)
 	}
 }
 
@@ -54,7 +55,8 @@ func addNote(note string) {
 		log.Fatal(err)
 	}
 
-	fmt.Println("Note added successfully.")
+	addFmt := termenv.String(fmt.Sprintf("Note added successfully.")).Italic().Foreground(termenv.ANSICyan)
+	fmt.Println(addFmt)
 }
 
 func remove(id int) {
@@ -74,7 +76,8 @@ func remove(id int) {
 		log.Fatal(err)
 	}
 
-	fmt.Printf("Note with ID %d removed successfully.\n", id)
+	rmFmt := termenv.String(fmt.Sprintf("Note with ID %d removed successfully.\n", id)).Italic().Foreground(termenv.ANSICyan)
+	fmt.Print(rmFmt)
 }
 
 func listNotes() {
@@ -95,7 +98,7 @@ func listNotes() {
 
 		t := time.Unix(timestamp, 0).UTC()
 
-		ls := termenv.String(fmt.Sprintf("%d, %s ~ %s\n", id, t.Format("2006-01-02"), note))
+		ls := termenv.String(fmt.Sprintf("%d, %s ~ %s\n", id, t.Format("2006-01-02"), note)).Foreground(termenv.ANSICyan)
 		fmt.Print(ls)
 	}
 
