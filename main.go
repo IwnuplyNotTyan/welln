@@ -2,16 +2,24 @@ package main
 
 import (
 	"database/sql"
+	"flag"
 	"fmt"
 	"log"
-	"os"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
+var db *sql.DB
+
 func main() {
-	db, err := sql.Open("sqlite3", "./main.db")
+	var rm = flag.Int("rm", 0, "ID of the note to remove")
+	var add = flag.String("add", "", "Note to add")
+	var ls = flag.Bool("ls", false, "List notes")
+	flag.Parse()
+
+	var err error
+	db, err = sql.Open("sqlite3", "./main.db")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -22,31 +30,70 @@ func main() {
 		log.Fatal(err)
 	}
 
+	if *add != "" {
+		addNote(*add)
+	} else if *rm > 0 {
+		remove(*rm)
+	} else if *ls {
+		listNotes()
+	} else {
+		fmt.Println("No valid flags provided. Use -add, -rm, or -ls.")
+	}
+}
+
+func addNote(note string) {
 	stmt, err := db.Prepare("INSERT INTO app (note, data) VALUES (?, ?)")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(os.Args[1], time.Now().UTC().Unix()) // Store time as Unix timestamp (int64)
+	_, err = stmt.Exec(note, time.Now().UTC().Unix())
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	rows, err := db.Query("SELECT data, note FROM app")
+	fmt.Println("Note added successfully.")
+}
+
+func remove(id int) {
+	var exists bool
+	err := db.QueryRow("SELECT EXISTS(SELECT 1 FROM app WHERE id = ?)", id).Scan(&exists)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if !exists {
+		fmt.Println("Note with ID", id, "does not exist.")
+		return
+	}
+
+	_, err = db.Exec("DELETE FROM app WHERE id = ?", id)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("Note with ID %d removed successfully.\n", id)
+}
+
+func listNotes() {
+	rows, err := db.Query("SELECT id, note, data FROM app ORDER BY data DESC")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer rows.Close()
 
 	for rows.Next() {
-		var timestamp int64
+		var id int
 		var note string
-		if err := rows.Scan(&timestamp, &note); err != nil {
+		var timestamp int64
+		err := rows.Scan(&id, &note, &timestamp)
+		if err != nil {
 			log.Fatal(err)
 		}
+
 		t := time.Unix(timestamp, 0).UTC()
-		fmt.Printf("%s ~ %s\n", t.Format("2006-01-02"), note)
+		fmt.Printf("ID: %d, %s ~ %s\n", id, t.Format("2006-01-02"), note)
 	}
 
 	if err := rows.Err(); err != nil {
