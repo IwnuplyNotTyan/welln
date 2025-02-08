@@ -4,10 +4,11 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
-	"log"
 	"time"
 
+	"github.com/charmbracelet/log"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/muesli/termenv"
 )
 
 var db *sql.DB
@@ -19,7 +20,7 @@ func main() {
 	flag.Parse()
 
 	var err error
-	db, err = sql.Open("sqlite3", "./main.db")
+	db, err = sql.Open("sqlite3", "./.welln.db")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -93,7 +94,9 @@ func listNotes() {
 		}
 
 		t := time.Unix(timestamp, 0).UTC()
-		fmt.Printf("ID: %d, %s ~ %s\n", id, t.Format("2006-01-02"), note)
+
+		ls := termenv.String(fmt.Sprintf("%d, %s ~ %s\n", id, t.Format("2006-01-02"), note))
+		fmt.Print(ls)
 	}
 
 	if err := rows.Err(); err != nil {
